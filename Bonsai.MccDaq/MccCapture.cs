@@ -13,6 +13,7 @@ namespace Bonsai.MccDaq
     {
         public MccCapture()
         {
+            BufferSize = 10;
             SampleRate = 1000;
             Range = global::MccDaq.Range.Bip5Volts;
             Options = ScanOptions.Default;
@@ -23,6 +24,10 @@ namespace Bonsai.MccDaq
         public int BufferSize { get; set; }
 
         public int SampleRate { get; set; }
+
+        public int LowChannel { get; set; }
+
+        public int HighChannel { get; set; }
 
         public global::MccDaq.Range Range { get; set; }
 
@@ -41,10 +46,13 @@ namespace Bonsai.MccDaq
                     var board = DaqDeviceManager.CreateDaqDevice(boardNumber, devices[boardNumber]);
                     try
                     {
+                        var lowChannel = LowChannel;
+                        var highChannel = HighChannel;
+                        var channels = highChannel - lowChannel + 1;
                         while (!cancellationToken.IsCancellationRequested)
                         {
-                            var output = new Mat(1, BufferSize, Depth.S16, 1);
-                            var error = board.AInScan(0, 0, output.Cols, ref sampleRate, Range, output.Data, Options);
+                            var output = new Mat(channels, BufferSize, Depth.S16, 1);
+                            var error = board.AInScan(lowChannel, highChannel, output.Cols, ref sampleRate, Range, output.Data, Options);
                             if (error.Value != ErrorInfo.ErrorCode.NoErrors)
                             {
                                 observer.OnError(new InvalidOperationException(error.Message));
