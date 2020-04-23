@@ -39,31 +39,21 @@ namespace Bonsai.MccDaq
             {
                 return Task.Factory.StartNew(() =>
                 {
-                    var boardNumber = BoardNumber;
+                    var lowChannel = LowChannel;
+                    var highChannel = HighChannel;
                     var sampleRate = SampleRate / 2;
-                    DaqDeviceManager.IgnoreInstaCal();
-                    var devices = DaqDeviceManager.GetDaqDeviceInventory(DaqDeviceInterface.Usb);
-                    var board = DaqDeviceManager.CreateDaqDevice(boardNumber, devices[boardNumber]);
-                    try
+                    var board = new MccBoard(BoardNumber);
+                    var channels = highChannel - lowChannel + 1;
+                    while (!cancellationToken.IsCancellationRequested)
                     {
-                        var lowChannel = LowChannel;
-                        var highChannel = HighChannel;
-                        var channels = highChannel - lowChannel + 1;
-                        while (!cancellationToken.IsCancellationRequested)
+                        var output = new Mat(channels, BufferSize, Depth.S16, 1);
+                        var error = board.AInScan(lowChannel, highChannel, output.Cols, ref sampleRate, Range, output.Data, Options);
+                        if (error.Value != ErrorInfo.ErrorCode.NoErrors)
                         {
-                            var output = new Mat(channels, BufferSize, Depth.S16, 1);
-                            var error = board.AInScan(lowChannel, highChannel, output.Cols, ref sampleRate, Range, output.Data, Options);
-                            if (error.Value != ErrorInfo.ErrorCode.NoErrors)
-                            {
-                                observer.OnError(new InvalidOperationException(error.Message));
-                            }
-
-                            observer.OnNext(output);
+                            observer.OnError(new InvalidOperationException(error.Message));
                         }
-                    }
-                    finally
-                    {
-                        DaqDeviceManager.ReleaseDaqDevice(board);
+
+                        observer.OnNext(output);
                     }
                 },
                 cancellationToken,
