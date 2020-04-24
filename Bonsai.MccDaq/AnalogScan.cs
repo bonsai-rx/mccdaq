@@ -15,8 +15,7 @@ namespace Bonsai.MccDaq
         {
             BufferSize = 10;
             SampleRate = 1000;
-            Range = global::MccDaq.Range.Bip5Volts;
-            Options = ScanOptions.Default;
+            Range = global::MccDaq.Range.NotUsed;
         }
 
         public int BoardNumber { get; set; }
@@ -31,28 +30,32 @@ namespace Bonsai.MccDaq
 
         public global::MccDaq.Range Range { get; set; }
 
-        public ScanOptions Options { get; set; }
-
         public override IObservable<Mat> Generate()
         {
             return Observable.Create<Mat>((observer, cancellationToken) =>
             {
                 return Task.Factory.StartNew(() =>
                 {
+                    var range = Range;
+                    var sampleRate = SampleRate;
+                    var bufferSize = BufferSize;
                     var lowChannel = LowChannel;
                     var highChannel = HighChannel;
-                    var sampleRate = SampleRate / 2;
                     var board = new MccBoard(BoardNumber);
                     var channels = highChannel - lowChannel + 1;
+                    var buffer = new Mat(bufferSize, channels, Depth.S16, 1);
+                    var numSamples = buffer.Rows * buffer.Cols;
+                    var options = ScanOptions.Default;
                     while (!cancellationToken.IsCancellationRequested)
                     {
-                        var output = new Mat(channels, BufferSize, Depth.S16, 1);
-                        var error = board.AInScan(lowChannel, highChannel, output.Cols, ref sampleRate, Range, output.Data, Options);
+                        var error = board.AInScan(lowChannel, highChannel, numSamples, ref sampleRate, range, buffer.Data, options);
                         if (error.Value != ErrorInfo.ErrorCode.NoErrors)
                         {
                             observer.OnError(new InvalidOperationException(error.Message));
                         }
 
+                        var output = new Mat(buffer.Cols, buffer.Rows, buffer.Depth, buffer.Channels);
+                        CV.Transpose(buffer, output);
                         observer.OnNext(output);
                     }
                 },
