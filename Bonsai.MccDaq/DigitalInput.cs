@@ -19,8 +19,7 @@ namespace Bonsai.MccDaq
             return Observable.Defer(() =>
             {
                 var portType = PortType;
-                var boardNumber = BoardNumber;
-                var board = new MccBoard(0);
+                var board = new MccBoard(BoardNumber);
                 var configError = board.DConfigPort(portType, DigitalPortDirection.DigitalIn);
                 if (configError.Value != ErrorInfo.ErrorCode.NoErrors)
                 {
