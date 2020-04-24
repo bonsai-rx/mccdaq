@@ -9,9 +9,9 @@ using System.Threading.Tasks;
 
 namespace Bonsai.MccDaq
 {
-    public class AnalogInput : Source<Mat>
+    public class AnalogScan : Source<Mat>
     {
-        public AnalogInput()
+        public AnalogScan()
         {
             BufferSize = 10;
             SampleRate = 1000;
