@@ -8,32 +8,29 @@ using System.Threading.Tasks;
 
 namespace Bonsai.MccDaq
 {
-    public class DigitalInput : Combinator<int>
+    public class SampleAnalog : Combinator<short>
     {
         public int BoardNumber { get; set; }
 
-        public DigitalPortType PortType { get; set; } = DigitalPortType.AuxPort;
+        public int Channel { get; set; }
 
-        public override IObservable<int> Process<TSource>(IObservable<TSource> source)
+        public global::MccDaq.Range Range { get; set; }
+
+        public override IObservable<short> Process<TSource>(IObservable<TSource> source)
         {
             return Observable.Defer(() =>
             {
-                var portType = PortType;
+                var range = Range;
+                var channel = Channel;
                 var board = new MccBoard(BoardNumber);
-                var configError = board.DConfigPort(portType, DigitalPortDirection.DigitalIn);
-                if (configError.Value != ErrorInfo.ErrorCode.NoErrors)
-                {
-                    throw new InvalidOperationException(configError.Message);
-                }
-
                 return source.Select(input =>
                 {
-                    var error = board.DIn(portType, out short dataValue);
+                    var error = board.AIn(channel, range, out short dataValue);
                     if (error.Value != ErrorInfo.ErrorCode.NoErrors)
                     {
                         throw new InvalidOperationException(error.Message);
                     }
-                    return (int)dataValue;
+                    return dataValue;
                 });
             });
         }
