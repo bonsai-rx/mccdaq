@@ -14,7 +14,7 @@ namespace Bonsai.MccDaq
     {
         public AnalogInput()
         {
-            SampleCount = 10;
+            SampleCount = 32;
             SampleRate = 1000;
             Range = global::MccDaq.Range.NotUsed;
         }
