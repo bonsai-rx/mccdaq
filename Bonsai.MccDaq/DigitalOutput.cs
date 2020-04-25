@@ -1,17 +1,17 @@
 ﻿using MccDaq;
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.ComponentModel;
 using System.Reactive.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Bonsai.MccDaq
 {
+    [Description("Writes a byte to a digital I/O port in a Measurement Computing device.")]
     public class DigitalOutput : Sink<short>
     {
+        [Description("The board number as defined in the Instacal system config file.")]
         public int BoardNumber { get; set; }
 
+        [Description("The number of the I/O port to write.")]
         public DigitalPortType PortType { get; set; } = DigitalPortType.AuxPort;
 
         public override IObservable<short> Process(IObservable<short> source)

@@ -1,17 +1,18 @@
 ﻿using MccDaq;
 using System;
-using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reactive.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Bonsai.MccDaq
 {
+    [Description("Samples a digital I/O port in a Measurement Computing device.")]
     public class SampleDigital : Combinator<int>
     {
+        [Description("The board number as defined in the Instacal system config file.")]
         public int BoardNumber { get; set; }
 
+        [Description("The number of the I/O port to read.")]
         public DigitalPortType PortType { get; set; } = DigitalPortType.AuxPort;
 
         public override IObservable<int> Process<TSource>(IObservable<TSource> source)

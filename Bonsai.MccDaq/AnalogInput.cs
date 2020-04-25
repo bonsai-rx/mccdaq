@@ -1,15 +1,14 @@
 ﻿using MccDaq;
 using OpenCV.Net;
 using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.ComponentModel;
 using System.Reactive.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Bonsai.MccDaq
 {
+    [Description("Acquires multiple samples from a range of analog input channels in a Measurement Computing device.")]
     public class AnalogInput : Source<Mat>
     {
         public AnalogInput()
@@ -18,17 +17,23 @@ namespace Bonsai.MccDaq
             SampleRate = 1000;
             Range = global::MccDaq.Range.NotUsed;
         }
-
+        
+        [Description("The board number as defined in the Instacal system config file.")]
         public int BoardNumber { get; set; }
 
+        [Description("The number of samples to acquire in each buffer.")]
         public int SampleCount { get; set; }
 
+        [Description("The per-channel sample rate, in Hz.")]
         public int SampleRate { get; set; }
 
+        [Description("The number of the first channel to scan.")]
         public int LowChannel { get; set; }
 
+        [Description("The number of the last channel to scan.")]
         public int HighChannel { get; set; }
 
+        [Description("Specifies the range used in the A/D device. If the board has a fixed gain, this parameter is ignored.")]
         public global::MccDaq.Range Range { get; set; }
 
         static void ThrowExceptionForErrorInfo(ErrorInfo error)
@@ -67,8 +72,13 @@ namespace Bonsai.MccDaq
                             var error = board.EnableEvent(EventType.OnDataAvailable, dataPoints, dataAvailable, IntPtr.Zero);
                             ThrowExceptionForErrorInfo(error);
 
-                            error = board.AInScan(lowChannel, highChannel, bufferPoints, ref sampleRate, range, buffer.Data, options);
+                            var actualRate = sampleRate;
+                            error = board.AInScan(lowChannel, highChannel, bufferPoints, ref actualRate, range, buffer.Data, options);
                             ThrowExceptionForErrorInfo(error);
+                            if (actualRate != sampleRate)
+                            {
+                                throw new InvalidOperationException($"The specified sampling rate is not available. Suggested rate: {actualRate}");
+                            }
 
                             var readIndex = 0;
                             while (!cancellationToken.IsCancellationRequested)
