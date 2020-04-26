@@ -63,12 +63,13 @@ namespace Bonsai.MccDaq
                     var bufferPoints = bufferSize * channels;
                     var buffer = new Mat(bufferSize, channels, Depth.S16, 1);
                     var options = ScanOptions.Continuous | ScanOptions.Background;
+                    var dataAvailable = default(EventCallback);
                     using (var waitEvent = new AutoResetEvent(false))
                     using (var cancellation = cancellationToken.Register(() => waitEvent.Set()))
                     {
                         try
                         {
-                            EventCallback dataAvailable = delegate { waitEvent.Set(); };
+                            dataAvailable = delegate { waitEvent.Set(); };
                             var error = board.EnableEvent(EventType.OnDataAvailable, dataPoints, dataAvailable, IntPtr.Zero);
                             ThrowExceptionForErrorInfo(error);
 
@@ -139,6 +140,7 @@ namespace Bonsai.MccDaq
                         {
                             board.StopBackground(FunctionType.AiFunction);
                             board.DisableEvent(EventType.OnDataAvailable);
+                            GC.KeepAlive(dataAvailable);
                         }
                     }
                 },
